@@ -9,49 +9,44 @@ WORKDIR /repo/monorepo
 ENV CI=true
 
 ############################
-# Deps (cài deps ở root)
+# Deps (cài deps ở monorepo/)
 ############################
 FROM base AS deps
-# Một số native deps cần libc6-compat trên Alpine
 RUN apk add --no-cache libc6-compat
-# Copy file khai báo deps ở root
+# package.json & package-lock.json nằm trong monorepo/
 COPY monorepo/package*.json ./
-# (nếu có lockfile khác, ví dụ pnpm-lock.yaml, hãy copy tương ứng)
+# bắt buộc có package-lock.json; nếu chưa có hãy commit nó
 RUN npm ci
 
 ############################
-# Build app cụ thể trong monorepo
+# Build app cụ thể
 ############################
 FROM base AS builder
-COPY --from=deps /repo/node_modules ./node_modules
-# Copy toàn bộ mã nguồn (apps, libs, nest-cli.json, tsconfig*, ...)
-COPY . .
-# APP_NAME = tên app trong thư mục apps/ và trong nest-cli.json
+# dùng node_modules đã cài ở stage deps
+COPY --from=deps /repo/monorepo/node_modules ./node_modules
+# copy toàn bộ mã nguồn trong thư mục monorepo (apps, libs, nest-cli.json, tsconfig*, ...)
+COPY monorepo/. .
+# APP_NAME = tên app trong monorepo/apps/<APP_NAME> (match với nest-cli.json)
 ARG APP_NAME=api-gateway
 RUN npx nest build ${APP_NAME}
 
 ############################
-# Runtime gọn nhẹ
+# Runtime gọn nhẹ (cài prod deps tại runtime)
 ############################
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Cần lại APP_NAME ở stage này
 ARG APP_NAME=api-gateway
 
-# Copy dist đúng app, và node_modules đã cài
-
+# copy dist của app
 COPY --from=builder /repo/monorepo/dist/apps/${APP_NAME} ./dist
-COPY --from=builder /repo/monorepo/package*.json ./
-COPY --from=deps    /repo/monorepo/node_modules ./node_modules
 
-
-# Loại bỏ dev deps (không bắt buộc, nhưng nên)
-RUN npm prune --omit=dev || true
+# cài prod deps từ package*.json ở monorepo
+COPY monorepo/package*.json ./
+RUN npm ci --omit=dev
 
 # (tuỳ chọn) Prisma:
-# COPY prisma ./prisma
+# COPY monorepo/prisma ./prisma
 # RUN npx prisma generate
 
 EXPOSE 3000
