@@ -11,15 +11,12 @@ services:
       - resource-module
     environment:
       NODE_ENV: ${ENVIRONMENT}
-      # Truyền host/port sang app (nếu bạn dùng ENV như ví dụ ở trên)
       NOTE_HOST: note-module
       NOTE_PORT: "3001"
       RESOURCE_HOST: resource-module
       RESOURCE_PORT: "3002"
     ports:
-      - "3000:3000" # chỉ gateway publish port ra host
-    # expose: ["3000"] # không cần nếu đã map ports
-    # networks: ["mononet"] # (tuỳ chọn) dùng network riêng
+      - "3000:3000"
 
   note-module:
     image: ${REGISTRY}/${IMAGE_PREFIX}-note-module:${IMAGE_TAG}
@@ -28,10 +25,7 @@ services:
     environment:
       NODE_ENV: ${ENVIRONMENT}
     expose:
-      - "3001" # expose nội bộ cho network docker, không publish ra host
-    # ports:
-    #   - "3001:3001" # CHỈ dùng khi muốn debug từ host
-    # networks: ["mononet"]
+      - "3001"
 
   resource-module:
     image: ${REGISTRY}/${IMAGE_PREFIX}-resource-module:${IMAGE_TAG}
@@ -41,11 +35,3 @@ services:
       NODE_ENV: ${ENVIRONMENT}
     expose:
       - "3002"
-    # ports:
-    #   - "3002:3002" # CHỈ dùng khi muốn debug từ host
-    # networks: ["mononet"]
-
-# Tuỳ chọn: khai báo network riêng (nếu muốn tách biệt)
-# networks:
-#   mononet:
-#     driver: bridge

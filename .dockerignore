@@ -1,62 +1,17 @@
-# Node modules
+
+# .dockerignore (root)
 node_modules
-npm-debug.log
-yarn-error.log
-
-# Build output
 dist
-build
-.next
-out
-
-# Environment files
-.env
-.env.*
-!.env.example
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
+coverage
+.nyc_output
 .git
 .gitignore
-.gitattributes
-
-# CI/CD
-.github
-
-# Test
-coverage
-*.test.js
-*.spec.js
-test
-tests
-**/__tests__
-**/__mocks__
-
-# Documentation
-*.md
-docs
-LICENSE
-
-# Docker
-Dockerfile*
-docker-compose*.yml
-.dockerignore
-
-# Logs
-logs
-*.log
-
-# Temporary files
-tmp
-temp
-.cache
+.vscode
+.idea
+Dockerfile
+**/Dockerfile
+**/.dockerignore
+npm-debug.log
+yarn-error.log
+.env
+.env.*

@@ -22,6 +22,8 @@ env:
   REGISTRY: ghcr.io
   # IMAGE_PREFIX sẽ được set động ở step "Normalize owner"
 
+
+# .github/workflows/deploy.yml (phần build)
 jobs:
   build:
     name: Build & Push images
@@ -45,71 +47,36 @@ jobs:
       - name: Login GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Debug paths
+        run: |
+          ls -la
+          ls -la apps/${{ matrix.service }} || true
+          test -f apps/${{ matrix.service }}/Dockerfile || (echo "❌ Missing apps/${{ matrix.service }}/Dockerfile"; exit 1)
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          images: ghcr.io/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build & Push
+      - name: Build & Push (monorepo apps/*)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./apps/${{ matrix.service }}/Dockerfile
           build-args: |
-            SERVICE_NAME=${{ matrix.service }}
+            APP_NAME=${{ matrix.service }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
 
-  deploy:
-    name: Deploy on EC2 runner
-    needs: build
-    runs-on: self-hosted
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Normalize owner to lowercase
-        run: |
-          echo "IMAGE_PREFIX=${GITHUB_REPOSITORY_OWNER,,}/monorepo" >> $GITHUB_ENV
-
-      - name: Prepare deploy dir
-        run: |
-          sudo mkdir -p /opt/monorepo
-          sudo chown -R $USER:$USER /opt/monorepo
-          cp compose.yml /opt/monorepo/compose.yml
-          cp scripts/deploy.sh /opt/monorepo/deploy.sh
-          chmod +x /opt/monorepo/deploy.sh
-
-      - name: Write .env
-        run: |
-          cat > /opt/monorepo/.env << 'EOF'
-          REGISTRY=${{ env.REGISTRY }}
-          IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
-          IMAGE_TAG=${{ github.sha }}
-          ENVIRONMENT=${{ github.event.inputs.environment || 'production' }}
-          # Tuỳ chọn:
-          # HEALTHCHECK_URL=http://localhost:3000/healthz
-          # HEALTH_MAX_ATTEMPTS=36
-          # HEALTH_INTERVAL_SEC=5
-          EOF
-
-      - name: Deploy (no SSH)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
-        run: |
-          cd /opt/monorepo
-          ./deploy.sh
