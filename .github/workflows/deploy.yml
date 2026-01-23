@@ -1,5 +1,5 @@
 
-name: Build & Deploy to EC2 (Self-hosted)
+name: Build & Deploy to EC2 (GitHub-hosted)
 
 on:
   push:
@@ -28,12 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-
+      packages: write  # cần để push GHCR
     strategy:
       matrix:
         service: [ api-gateway, note-module, resource-module ]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,10 +77,15 @@ jobs:
           platforms: linux/amd64
 
   deploy:
-    name: Deploy on EC2 runner
+    name: Deploy via SSH to EC2
     needs: build
-    runs-on: self-hosted
-
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read   # nếu cần dùng GHCR token (không bắt buộc ở runner)
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,31 +94,53 @@ jobs:
         run: |
           echo "IMAGE_PREFIX=${GITHUB_REPOSITORY_OWNER,,}/monorepo" >> $GITHUB_ENV
 
-      - name: Prepare deploy dir
+      # Thiết lập SSH key ở runner GitHub-hosted
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add EC2 to known_hosts
         run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # (Tuỳ chọn) Copy file compose và deploy script lên EC2
+      - name: Upload compose & scripts to EC2
+        run: |
+          rsync -avz --delete --rsync-path="sudo rsync" monorepo/compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
+          rsync -avz --rsync-path="sudo rsync" scripts/deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/monorepo/deploy.sh
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "sudo chown -R $USER:$USER /opt/monorepo && chmod +x /opt/monorepo/deploy.sh"
+
+      # Viết .env trên EC2 để deploy script dùng
+      - name: Write remote .env
+        run: |
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "bash -s" << 'EOF'
+          set -e
           sudo mkdir -p /opt/monorepo
           sudo chown -R $USER:$USER /opt/monorepo
-          cp monorepo/compose.yml /opt/monorepo/compose.yml
-          cp scripts/deploy.sh /opt/monorepo/deploy.sh
-          chmod +x /opt/monorepo/deploy.sh
-
-      - name: Write .env
-        run: |
-          cat > /opt/monorepo/.env << 'EOF'
+          cat > /opt/monorepo/.env << EOT
           REGISTRY=${{ env.REGISTRY }}
           IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
-          IMAGE_TAG=${{ github.sha }}
-          ENVIRONMENT=${{ github.event.inputs.environment || 'production' }}
-          # Tuỳ chọn:
+          IMAGE_TAG=${{ env.IMAGE_TAG }}
+          ENVIRONMENT=${{ env.ENVIRONMENT }}
           # HEALTHCHECK_URL=http://localhost:3000/healthz
           # HEALTH_MAX_ATTEMPTS=36
           # HEALTH_INTERVAL_SEC=5
+          EOT
           EOF
 
-      - name: Deploy (no SSH, run on EC2 runner)
+      # (Khuyên dùng) Login GHCR tại EC2 để pull image về
+      # Cách 1: dùng GitHub token tạm thời từ workflow (thường đủ quyền read)
+      - name: GHCR login on EC2 (using GitHub Token)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd /opt/monorepo
-          ./deploy.sh
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin"
+
+      # Thực thi deploy script trên EC2 (pull image và docker compose up -d)
+      - name: Remote deploy
+        run: |
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "cd /opt/monorepo && ./deploy.sh"
