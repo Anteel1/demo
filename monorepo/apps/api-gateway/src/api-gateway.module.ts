@@ -17,7 +17,7 @@ import path, { join } from 'path';
         name: 'NOTE_SERVICE',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'note-module',
           port: 3001,
         },
       }]),
@@ -26,7 +26,7 @@ import path, { join } from 'path';
         name: 'RESOURCE_SERVICE',
         transport: Transport.TCP,
         options: {
-          host: '127.0.0.1',
+          host: 'resource-module',
           port: 3002,
         },
       }])

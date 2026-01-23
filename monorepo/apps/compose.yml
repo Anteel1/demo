@@ -1,0 +1,51 @@
+
+version: "3.9"
+
+services:
+  api-gateway:
+    image: ${REGISTRY}/${IMAGE_PREFIX}-api-gateway:${IMAGE_TAG}
+    container_name: api-gateway
+    restart: always
+    depends_on:
+      - note-module
+      - resource-module
+    environment:
+      NODE_ENV: ${ENVIRONMENT}
+      # Truyền host/port sang app (nếu bạn dùng ENV như ví dụ ở trên)
+      NOTE_HOST: note-module
+      NOTE_PORT: "3001"
+      RESOURCE_HOST: resource-module
+      RESOURCE_PORT: "3002"
+    ports:
+      - "3000:3000" # chỉ gateway publish port ra host
+    # expose: ["3000"] # không cần nếu đã map ports
+    # networks: ["mononet"] # (tuỳ chọn) dùng network riêng
+
+  note-module:
+    image: ${REGISTRY}/${IMAGE_PREFIX}-note-module:${IMAGE_TAG}
+    container_name: note-module
+    restart: always
+    environment:
+      NODE_ENV: ${ENVIRONMENT}
+    expose:
+      - "3001" # expose nội bộ cho network docker, không publish ra host
+    # ports:
+    #   - "3001:3001" # CHỈ dùng khi muốn debug từ host
+    # networks: ["mononet"]
+
+  resource-module:
+    image: ${REGISTRY}/${IMAGE_PREFIX}-resource-module:${IMAGE_TAG}
+    container_name: resource-module
+    restart: always
+    environment:
+      NODE_ENV: ${ENVIRONMENT}
+    expose:
+      - "3002"
+    # ports:
+    #   - "3002:3002" # CHỈ dùng khi muốn debug từ host
+    # networks: ["mononet"]
+
+# Tuỳ chọn: khai báo network riêng (nếu muốn tách biệt)
+# networks:
+#   mononet:
+#     driver: bridge
