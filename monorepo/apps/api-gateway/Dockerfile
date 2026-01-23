@@ -5,7 +5,7 @@
 # Base
 ############################
 FROM node:20-alpine AS base
-WORKDIR /repo
+WORKDIR /repo/monorepo
 ENV CI=true
 
 ############################
@@ -15,7 +15,7 @@ FROM base AS deps
 # Một số native deps cần libc6-compat trên Alpine
 RUN apk add --no-cache libc6-compat
 # Copy file khai báo deps ở root
-COPY package*.json ./
+COPY monorepo/package*.json ./
 # (nếu có lockfile khác, ví dụ pnpm-lock.yaml, hãy copy tương ứng)
 RUN npm ci
 
@@ -41,9 +41,11 @@ ENV NODE_ENV=production
 ARG APP_NAME=api-gateway
 
 # Copy dist đúng app, và node_modules đã cài
-COPY --from=builder /repo/dist/apps/${APP_NAME} ./dist
-COPY --from=builder /repo/package*.json ./
-COPY --from=deps /repo/node_modules ./node_modules
+
+COPY --from=builder /repo/monorepo/dist/apps/${APP_NAME} ./dist
+COPY --from=builder /repo/monorepo/package*.json ./
+COPY --from=deps    /repo/monorepo/node_modules ./node_modules
+
 
 # Loại bỏ dev deps (không bắt buộc, nhưng nên)
 RUN npm prune --omit=dev || true
