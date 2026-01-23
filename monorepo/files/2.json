@@ -1,0 +1,7 @@
+{
+  "id":2,
+  "title": "Design pattern",
+  "tag": "note",
+  "content": "\"* Why design pattern ?\\n- It make better code\\n- Become a better programmer\\n\\n* Where is design pattern come from ?\\nGang of four : published 1994\\n\\n1 / Singleton\\nFor handle multiple instance created. It may cause a lot of issue cause maybe we just want to attach to 1 instance only.\\n\\n2 / Prototype\\nUsing for handle if we want to recreate an object by cloning exist instance -> better way instead of try to create a new object and apply same data\\n\\n3 / Factory\\nUsing for handle create difference objects with difference logic for multiple case.\\n\\n4 / Builder\\nUsing for handle multiple argument for class => make it more clean and simple\\n\\n5 / Adapter\\nUsing to allow objects with incompatible interfaces to collaborate\\n\\n6 / Proxy\\nIt intercepts and controls access to the target object\\n\\n7 / \\n\\n\\n\\n\\n\\n\\n\"",
+  "updatedAt": "2025-12-25T02:54:54.921Z"
+}

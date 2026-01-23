@@ -1,0 +1,7 @@
+{
+  "id": "b652a34d-da46-4c63-9ba8-64fa35c3918a",
+  "title": "[AWS] EKS",
+  "tag": "note",
+  "content": "<b><font style=\"font-size: 24px;\">*/ Elastic Kubernetes Service</font></b><div><b><font style=\"font-size: 24px;\"><br></font></b></div><div><b><font style=\"font-size: 24px;\"><img src=\"http://127.0.0.1:3000/1767772990626-66d5fe88-16af-4387-a08d-14abb0fa4d8d.png\" alt=\"Pasted image\"></font></b></div><div><br></div><div><img src=\"http://127.0.0.1:3000/1767773040141-8de0bbe9-2457-4f00-9237-4954593e8122.png\" alt=\"Pasted image\"><br><img src=\"http://127.0.0.1:3000/1767773095230-cb496709-34b3-4d86-aa53-110b0692be24.png\" alt=\"Pasted image\"><br><font style=\"font-size: 20px;\"><u>Creating a cluster :</u></font></div><div>require : </div><div>* AWS CLI</div><div>* kubectl</div><div><br></div><div><img src=\"http://127.0.0.1:3000/1767840615568-dcc48062-921a-4a92-92a4-0e31e7bad64b.png\" alt=\"Pasted image\"><br><br></div><div><br></div>",
+  "updatedAt": "2026-01-08T02:50:17.611Z"
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/monorepo/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/monorepo/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/monorepo",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "monorepo": {
+      "type": "application",
+      "root": "apps/monorepo",
+      "entryFile": "main",
+      "sourceRoot": "apps/monorepo/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/monorepo/tsconfig.app.json"
+      }
+    },
+    "note-module": {
+      "type": "application",
+      "root": "apps/note-module",
+      "entryFile": "main",
+      "sourceRoot": "apps/note-module/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/note-module/tsconfig.app.json"
+      }
+    },
+    "resource-module": {
+      "type": "application",
+      "root": "apps/resource-module",
+      "entryFile": "main",
+      "sourceRoot": "apps/resource-module/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/resource-module/tsconfig.app.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "id": "90968ec0-5731-451e-b306-0d05548023ab",
+  "title": "[Boomi]",
+  "tag": "note",
+  "content": "Boomi AI<div><br></div><div>Boomi API management</div><div><br></div><div>Data hub</div><div><br></div><div>Integration &amp; Automation</div><div><br></div><div>Flow</div><div><br></div><div>Event Streams</div><div><br></div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>\r</div><div>B2B/EDI management</div><div><br></div><div>Task Automation</div><div><br></div><div>* Process =&gt; Using for transfer,  modify, delete data from resource A to target B </div><div><br></div><div>* Runtime cloud =&gt; Setup runtime for process</div><div><br></div><div>* Document type =&gt; EDI ( encrypt format for trading B2B business ) , XML, JSON, Database, FlatFile ( csv ... )</div><div><br></div><div>* Profile =&gt; 1 model schema for mapping props</div>",
+  "updatedAt": "2026-01-06T07:05:22.023Z"
+}
