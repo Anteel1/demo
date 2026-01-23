@@ -1,29 +1,4 @@
 
-name: Build & Deploy to EC2 (Self-hosted)
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy"
-        required: true
-        default: "production"
-        type: choice
-        options: [ "production", "staging" ]
-
-# Tránh deploy chồng
-concurrency:
-  group: ec2-deploy-${{ github.ref_name }}
-  cancel-in-progress: true
-
-env:
-  REGISTRY: ghcr.io
-  # IMAGE_PREFIX sẽ được set động ở step "Normalize owner"
-
-
-# .github/workflows/deploy.yml (phần build)
 jobs:
   build:
     name: Build & Push images
@@ -54,11 +29,12 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
+      # ✅ Sửa đường dẫn sang monorepo/apps/<service>
       - name: Debug paths
         run: |
           ls -la
-          ls -la apps/${{ matrix.service }} || true
-          test -f apps/${{ matrix.service }}/Dockerfile || (echo "❌ Missing apps/${{ matrix.service }}/Dockerfile"; exit 1)
+          ls -la monorepo/apps/${{ matrix.service }} || true
+          test -f monorepo/apps/${{ matrix.service }}/Dockerfile || (echo "❌ Missing monorepo/apps/${{ matrix.service }}/Dockerfile"; exit 1)
 
       - name: Docker meta
         id: meta
@@ -69,14 +45,15 @@ jobs:
             type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build & Push (monorepo apps/*)
+      # ✅ context vẫn là root (.) để thấy package.json, nest-cli.json, libs/...
+      # ✅ file là Dockerfile trong monorepo/apps/<service>
+      - name: Build & Push (monorepo under monorepo/apps/*)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./apps/${{ matrix.service }}/Dockerfile
+          file: ./monorepo/apps/${{ matrix.service }}/Dockerfile
           build-args: |
             APP_NAME=${{ matrix.service }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
-
