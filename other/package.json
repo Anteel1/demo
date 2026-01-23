@@ -1,0 +1,23 @@
+{
+  "name": "time-extension",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anteel1/time-extension.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anteel1/time-extension/issues"
+  },
+  "homepage": "https://github.com/Anteel1/time-extension#readme",
+  "description": "",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^2.0.76",
+    "k6": "^0.0.0"
+  }
+}

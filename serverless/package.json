@@ -1,0 +1,20 @@
+{
+  "name": "express-on-lambda",
+  "version": "1.0.0",
+  "main": "handler.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "serverless offline",
+    "deploy": "serverless deploy function --function randomSix",
+    "remove": "serverless remove"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.969.0",
+    "express": "^4.19.2",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.2.0"
+  }
+}

@@ -1,0 +1,33 @@
+
+deploy:
+  needs: build
+  runs-on: self-hosted
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Chuẩn bị thư mục deploy
+      run: |
+        sudo mkdir -p /opt/monorepo
+        sudo chown -R $USER:$USER /opt/monorepo
+        cp compose.yml /opt/monorepo/compose.yml
+        cp scripts/deploy.sh /opt/monorepo/deploy.sh
+        chmod +x /opt/monorepo/deploy.sh
+
+    - name: Tạo .env
+      run: |
+        cat > /opt/monorepo/.env << 'EOF'
+        REGISTRY=ghcr.io
+        IMAGE_PREFIX=${{ toLower(github.repository_owner) }}/monorepo
+        IMAGE_TAG=${{ github.sha }}
+        ENVIRONMENT=production
+        EOF
+
+    - name: Deploy (không cần SSH)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_ACTOR: ${{ github.actor }}
+      run: |
+        cd /opt/monorepo
+        ./deploy.sh
+``

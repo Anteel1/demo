@@ -1,0 +1,731 @@
+{
+  "service": {
+    "service": "api-to-sqs-to-lambda",
+    "serviceObject": {
+      "name": "api-to-sqs-to-lambda"
+    },
+    "provider": {
+      "name": "aws",
+      "region": "ap-southeast-1",
+      "runtime": "nodejs20.x",
+      "stage": "dev",
+      "httpApi": {
+        "payload": "2.0",
+        "cors": true
+      },
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "WorkerLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/api-to-sqs-to-lambda-dev-worker"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "api-to-sqs-to-lambda",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-sqs-to-lambda-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-sqs-to-lambda-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "RandomQueue",
+                              "Arn"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "api-to-sqs-to-lambda",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "WorkerLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/api-to-sqs-to-lambda/dev/1768469684802-2026-01-15T09:34:44.802Z/api-to-sqs-to-lambda.zip"
+              },
+              "Handler": "handler.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "api-to-sqs-to-lambda-dev-worker",
+              "MemorySize": 128,
+              "Timeout": 30,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "WorkerLogGroup"
+            ]
+          },
+          "WorkerLambdaVersionGhxpDqfRZKGwLUReuTBaLs7djb0lRzHlXMCV1HvFEs": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "WorkerLambdaFunction"
+              },
+              "CodeSha256": "FoF/7bovlCh/q1hcH6MQLzKHhAmoqX5vjlV2Pr3Q8jw="
+            }
+          },
+          "WorkerEventSourceMappingSQSRandomQueue": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": [
+              "IamRoleLambdaExecution"
+            ],
+            "Properties": {
+              "BatchSize": 5,
+              "MaximumBatchingWindowInSeconds": 0,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "RandomQueue",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "WorkerLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "HttpApi": {
+            "Type": "AWS::ApiGatewayV2::Api",
+            "Properties": {
+              "Name": {
+                "Fn::Sub": "api-to-sqs-to-lambda-dev"
+              },
+              "ProtocolType": "HTTP",
+              "CorsConfiguration": {
+                "AllowOrigins": [
+                  "*"
+                ],
+                "AllowMethods": [
+                  "GET",
+                  "OPTIONS"
+                ],
+                "AllowHeaders": [
+                  "*"
+                ]
+              }
+            }
+          },
+          "HttpApiStage": {
+            "Type": "AWS::ApiGatewayV2::Stage",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "StageName": {
+                "Fn::Sub": "dev"
+              },
+              "AutoDeploy": true
+            }
+          },
+          "RandomDLQ": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": {
+                "Fn::Sub": "random-dlq-api-to-sqs-to-lambda-dev"
+              },
+              "MessageRetentionPeriod": 86400
+            }
+          },
+          "RandomQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": {
+                "Fn::Sub": "random-queue-api-to-sqs-to-lambda-dev"
+              },
+              "VisibilityTimeout": 180,
+              "MessageRetentionPeriod": 3600,
+              "RedrivePolicy": {
+                "deadLetterTargetArn": {
+                  "Fn::GetAtt": [
+                    "RandomDLQ",
+                    "Arn"
+                  ]
+                },
+                "maxReceiveCount": 3
+              }
+            }
+          },
+          "ApiGwToSqsRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "RoleName": {
+                "Fn::Sub": "api-to-sqs-role-api-to-sqs-to-lambda-dev"
+              },
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "apigateway.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": "AllowSendMessageToQueue",
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": "sqs:SendMessage",
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "RandomQueue",
+                            "Arn"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "HttpApiIntegrationToSqs": {
+            "Type": "AWS::ApiGatewayV2::Integration",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "IntegrationType": "AWS_PROXY",
+              "IntegrationSubtype": "SQS-SendMessage",
+              "CredentialsArn": {
+                "Fn::GetAtt": [
+                  "ApiGwToSqsRole",
+                  "Arn"
+                ]
+              },
+              "PayloadFormatVersion": "1.0",
+              "RequestParameters": {
+                "QueueUrl": {
+                  "Ref": "RandomQueue"
+                },
+                "MessageBody": "$request.querystring.msg"
+              }
+            }
+          },
+          "HttpApiRouteRandom": {
+            "Type": "AWS::ApiGatewayV2::Route",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "RouteKey": "GET /random",
+              "Target": {
+                "Fn::Join": [
+                  "/",
+                  [
+                    "integrations",
+                    {
+                      "Ref": "HttpApiIntegrationToSqs"
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            },
+            "Export": {
+              "Name": "sls-api-to-sqs-to-lambda-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "WorkerLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "WorkerLambdaVersionGhxpDqfRZKGwLUReuTBaLs7djb0lRzHlXMCV1HvFEs"
+            },
+            "Export": {
+              "Name": "sls-api-to-sqs-to-lambda-dev-WorkerLambdaFunctionQualifiedArn"
+            }
+          },
+          "ApiInvokeUrl": {
+            "Value": {
+              "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+            },
+            "Description": "Invoke URL for HTTP API stage"
+          },
+          "QueueUrl": {
+            "Value": {
+              "Ref": "RandomQueue"
+            },
+            "Description": "URL of the main SQS queue"
+          },
+          "DLQUrl": {
+            "Value": {
+              "Ref": "RandomDLQ"
+            },
+            "Description": "URL of the dead-letter queue"
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "pluginsData": {},
+    "functions": {
+      "worker": {
+        "handler": "handler.handler",
+        "timeout": 30,
+        "memorySize": 128,
+        "events": [
+          {
+            "sqs": {
+              "arn": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"IamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][2][\"Resource\"][0]"
+              },
+              "batchSize": 5,
+              "maximumBatchingWindow": 0
+            }
+          }
+        ],
+        "name": "api-to-sqs-to-lambda-dev-worker",
+        "package": {},
+        "memory": 128,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "WorkerLambdaVersionGhxpDqfRZKGwLUReuTBaLs7djb0lRzHlXMCV1HvFEs"
+      }
+    },
+    "resources": {
+      "Resources": {
+        "HttpApi": {
+          "Type": "AWS::ApiGatewayV2::Api",
+          "Properties": {
+            "Name": {
+              "Fn::Sub": "api-to-sqs-to-lambda-dev"
+            },
+            "ProtocolType": "HTTP",
+            "CorsConfiguration": {
+              "AllowOrigins": [
+                "*"
+              ],
+              "AllowMethods": [
+                "GET",
+                "OPTIONS"
+              ],
+              "AllowHeaders": [
+                "*"
+              ]
+            }
+          }
+        },
+        "HttpApiStage": {
+          "Type": "AWS::ApiGatewayV2::Stage",
+          "Properties": {
+            "ApiId": {
+              "Ref": "HttpApi"
+            },
+            "StageName": {
+              "Fn::Sub": "dev"
+            },
+            "AutoDeploy": true
+          }
+        },
+        "RandomDLQ": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": {
+              "Fn::Sub": "random-dlq-api-to-sqs-to-lambda-dev"
+            },
+            "MessageRetentionPeriod": 86400
+          }
+        },
+        "RandomQueue": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": {
+              "Fn::Sub": "random-queue-api-to-sqs-to-lambda-dev"
+            },
+            "VisibilityTimeout": 180,
+            "MessageRetentionPeriod": 3600,
+            "RedrivePolicy": {
+              "deadLetterTargetArn": {
+                "Fn::GetAtt": [
+                  "RandomDLQ",
+                  "Arn"
+                ]
+              },
+              "maxReceiveCount": 3
+            }
+          }
+        },
+        "ApiGwToSqsRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "RoleName": {
+              "Fn::Sub": "api-to-sqs-role-api-to-sqs-to-lambda-dev"
+            },
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": "apigateway.amazonaws.com"
+                  },
+                  "Action": "sts:AssumeRole"
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": "AllowSendMessageToQueue",
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": "sqs:SendMessage",
+                      "Resource": {
+                        "Fn::GetAtt": [
+                          "RandomQueue",
+                          "Arn"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "HttpApiIntegrationToSqs": {
+          "Type": "AWS::ApiGatewayV2::Integration",
+          "Properties": {
+            "ApiId": {
+              "Ref": "HttpApi"
+            },
+            "IntegrationType": "AWS_PROXY",
+            "IntegrationSubtype": "SQS-SendMessage",
+            "CredentialsArn": {
+              "Fn::GetAtt": [
+                "ApiGwToSqsRole",
+                "Arn"
+              ]
+            },
+            "PayloadFormatVersion": "1.0",
+            "RequestParameters": {
+              "QueueUrl": {
+                "Ref": "RandomQueue"
+              },
+              "MessageBody": "$request.querystring.msg"
+            }
+          }
+        },
+        "HttpApiRouteRandom": {
+          "Type": "AWS::ApiGatewayV2::Route",
+          "Properties": {
+            "ApiId": {
+              "Ref": "HttpApi"
+            },
+            "RouteKey": "GET /random",
+            "Target": {
+              "Fn::Join": [
+                "/",
+                [
+                  "integrations",
+                  {
+                    "Ref": "HttpApiIntegrationToSqs"
+                  }
+                ]
+              ]
+            }
+          }
+        }
+      },
+      "Outputs": {
+        "ApiInvokeUrl": {
+          "Value": {
+            "Fn::Sub": "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+          },
+          "Description": "Invoke URL for HTTP API stage"
+        },
+        "QueueUrl": {
+          "Value": {
+            "Ref": "RandomQueue"
+          },
+          "Description": "URL of the main SQS queue"
+        },
+        "DLQUrl": {
+          "Value": {
+            "Ref": "RandomDLQ"
+          },
+          "Description": "URL of the dead-letter queue"
+        }
+      }
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "service": "api-to-sqs-to-lambda",
+      "frameworkVersion": "3",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false,
+    "artifact": "C:\\Users\\luonglk1\\time\\time-extension\\serverless\\.serverless\\api-to-sqs-to-lambda.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/api-to-sqs-to-lambda/dev/1768469684802-2026-01-15T09:34:44.802Z",
+    "artifact": "api-to-sqs-to-lambda.zip"
+  }
+}
