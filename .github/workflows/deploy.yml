@@ -30,4 +30,3 @@ deploy:
       run: |
         cd /opt/monorepo
         ./deploy.sh
-``
