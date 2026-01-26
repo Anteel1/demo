@@ -68,6 +68,12 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          if [ -f ~/.ssh/deploy_key ]; then
+              echo "✅ Key exists."
+          else
+              echo "❌ Key NOT found."
+              exit 1
+          fi
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
