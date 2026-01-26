@@ -29,6 +29,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      
+      - name: Normalize owner/repo to lowercase
+        run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_PREFIX=${OWNER_LOWER}/${REPO_LOWER}" >> $GITHUB_ENV
+
+
       - name: Docker login to GHCR (for push)
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
@@ -95,10 +103,6 @@ jobs:
           rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
             monorepo/compose.yml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
-
-
-      
-      
       - name: Deploy (SSH to EC2)
         env:
                 EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
