@@ -1,164 +1,113 @@
 
-name: Build & Deploy to EC2 (GitHub-hosted)
+name: Build & Deploy 3 services to EC2 (GHCR)
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy"
-        required: true
-        default: "production"
-        type: choice
-        options: [ "production", "staging" ]
-
-# Tránh deploy chồng
-concurrency:
-  group: ec2-deploy-${{ github.ref_name }}
-  cancel-in-progress: true
 
 env:
+  # ---- Registry & Naming ----
   REGISTRY: ghcr.io
-  # IMAGE_PREFIX sẽ được set trong step "Normalize owner"
+  IMAGE_PREFIX: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+  # Ví dụ full path image sẽ là:
+  # ghcr.io/<owner>/<repo>-api-gateway:<tag>
+  # ghcr.io/<owner>/<repo>-note-module:<tag>
+  # ghcr.io/<owner>/<repo>-resource-module:<tag>
+
+  # ---- Tag ----
+  IMAGE_TAG: ${{ github.sha }} # hoặc "latest"
+
+permissions:
+  contents: read
+  packages: write     # cần để PUSH image lên GHCR bằng GITHUB_TOKEN
 
 jobs:
-  build:
-    name: Build & Push images
+  build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write  # cần để push GHCR
-    strategy:
-      matrix:
-        service: [ api-gateway, note-module, resource-module ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Normalize owner to lowercase
+      - name: Docker login to GHCR (for push)
         run: |
-          echo "IMAGE_PREFIX=${GITHUB_REPOSITORY_OWNER,,}/monorepo" >> $GITHUB_ENV
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Login GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Debug paths (monorepo/apps/<service>)
+      # ===== Build & push: api-gateway =====
+      - name: Build api-gateway
         run: |
-          ls -la
-          ls -la monorepo/apps/${{ matrix.service }} || true
-          test -f monorepo/apps/${{ matrix.service }}/Dockerfile || (echo "❌ Missing monorepo/apps/${{ matrix.service }}/Dockerfile"; exit 1)
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api-gateway:${{ env.IMAGE_TAG }}"
+          echo "Building $IMAGE"
+          docker build \
+            -f monorepo/apps/api-gateway/Dockerfile \
+            -t "$IMAGE" \
+            .
+      - name: Push api-gateway
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api-gateway:${{ env.IMAGE_TAG }}"
+          docker push "$IMAGE"
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
-          tags: |
-            type=raw,value=${{ github.sha }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+      # ===== Build & push: note-module =====
+      - name: Build note-module
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-note-module:${{ env.IMAGE_TAG }}"
+          echo "Building $IMAGE"
+          docker build \
+            -f monorepo/apps/note-module/Dockerfile \
+            -t "$IMAGE" \
+            .
+      - name: Push note-module
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-note-module:${{ env.IMAGE_TAG }}"
+          docker push "$IMAGE"
 
-      - name: Build & Push (monorepo apps/*)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./monorepo/apps/${{ matrix.service }}/Dockerfile
-          build-args: |
-            APP_NAME=${{ matrix.service }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          platforms: linux/amd64
+      # ===== Build & push: resource-module =====
+      - name: Build resource-module
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
+          echo "Building $IMAGE"
+          docker build \
+            -f monorepo/apps/resource-module/Dockerfile \
+            -t "$IMAGE" \
+            .
+      - name: Push resource-module
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
+          docker push "$IMAGE"
 
   deploy:
-    name: Deploy via SSH to EC2
-    needs: build
+    needs: build-and-push
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read   # nếu cần dùng GHCR token (không bắt buộc ở runner)
-    env:
-      IMAGE_TAG: ${{ github.sha }}
-      ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
     steps:
-      - name: Checkout
+      - name: Checkout (để lấy compose.yml nếu có)
         uses: actions/checkout@v4
 
-      - name: Normalize owner to lowercase
-        run: |
-          echo "IMAGE_PREFIX=${GITHUB_REPOSITORY_OWNER,,}/monorepo" >> $GITHUB_ENV
-
-      # Thiết lập SSH key ở runner GitHub-hosted
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: |
-            ${{ secrets.EC2_SSH_KEY }}
-
-      - name: Add EC2 to known_hosts
+      - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      # (Tùy chọn) upload docker compose file lên EC2
+      - name: Upload compose.yml to EC2
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+            monorepo/compose.yml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
+
 
       
-      # (Khuyên dùng) Chuẩn bị thư mục từ xa trước
-      - name: Prepare remote directory
+      
+      - name: Deploy (SSH to EC2)
+              env:
+                EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
+                REGISTRY: ghcr.io
+                IMAGE_PREFIX: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+                IMAGE_TAG: ${{ github.sha }}
+                GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+                GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "\
-            sudo mkdir -p /opt/monorepo && \
-            sudo chown -R \$(whoami):\$(whoami) /opt/monorepo \
-          "
-       
-      # Upload compose & scripts bằng scp (tránh sudo rsync)
-      - name: Upload compose & scripts to EC2
-        run: |
-          # ✅ Nếu file của bạn là compose.yaml, đổi tên ở dòng dưới cho đúng
-          scp monorepo/compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/compose.yml
-          scp scripts/deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/deploy.sh
+                ./scripts/deploy.sh "${{ secrets.EC2_USER }}" "${{ secrets.EC2_HOST }}"
 
-          # Di chuyển vào /opt/monorepo và set quyền/chmod
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "\
-            sudo mv /tmp/compose.yml /opt/monorepo/compose.yml && \
-            sudo mv /tmp/deploy.sh /opt/monorepo/deploy.sh && \
-            sudo chown \$(whoami):\$(whoami) /opt/monorepo/compose.yml /opt/monorepo/deploy.sh && \
-            chmod +x /opt/monorepo/deploy.sh \
-          "
-        
 
-      # Viết .env trên EC2 để deploy script dùng
-      - name: Write remote .env
-        run: |
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "bash -s" << 'EOF'
-          set -e
-          sudo mkdir -p /opt/monorepo
-          sudo chown -R $USER:$USER /opt/monorepo
-          cat > /opt/monorepo/.env << EOT
-          REGISTRY=${{ env.REGISTRY }}
-          IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
-          IMAGE_TAG=${{ env.IMAGE_TAG }}
-          ENVIRONMENT=${{ env.ENVIRONMENT }}
-          # HEALTHCHECK_URL=http://localhost:3000/healthz
-          # HEALTH_MAX_ATTEMPTS=36
-          # HEALTH_INTERVAL_SEC=5
-          EOT
-          EOF
-
-      # (Khuyên dùng) Login GHCR tại EC2 để pull image về
-      # Cách 1: dùng GitHub token tạm thời từ workflow (thường đủ quyền read)
-      - name: GHCR login on EC2 (using GitHub Token)
-        env:
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin"
-
-      # Thực thi deploy script trên EC2 (pull image và docker compose up -d)
-      - name: Remote deploy
-        run: |
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "cd /opt/monorepo && ./deploy.sh"
