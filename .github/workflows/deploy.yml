@@ -83,35 +83,47 @@ jobs:
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
           docker push "$IMAGE"
 
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout (để lấy compose.yml nếu có)
-        uses: actions/checkout@v4
+    deploy:
+      needs: build-and-push
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
 
-      - name: Prepare SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+        - name: Normalize Image Prefix (Quan trọng)
+          run: |
+            OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            REPO_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+            echo "IMAGE_PREFIX=${OWNER_LOWER}/${REPO_LOWER}" >> $GITHUB_ENV
 
-      # (Tùy chọn) upload docker compose file lên EC2
-      - name: Upload compose.yml to EC2
-        run: |
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-            monorepo/compose.yml \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
-      - name: Deploy (SSH to EC2)
-        env:
-                EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
-                REGISTRY: ghcr.io
-                IMAGE_PREFIX: ${{ github.repository_owner }}/${{ github.event.repository.name }}
-                IMAGE_TAG: ${{ github.sha }}
-                GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-                GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: |
-                ./scripts/deploy.sh "${{ secrets.EC2_USER }}" "${{ secrets.EC2_HOST }}"
+        - name: Prepare SSH
+          run: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+            ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+        - name: Upload files to EC2
+          run: |
+            # Đảm bảo thư mục đích tồn tại và có quyền ghi
+            ssh -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo mkdir -p /opt/monorepo && sudo chown ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /opt/monorepo"
+            
+            # Copy docker-compose
+            rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+              monorepo/compose.yml \
+              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
+
+        - name: Execute Deploy Script
+          env:
+            # Truyền các biến này để script deploy.sh có thể đọc được
+            EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
+            REGISTRY: ghcr.io
+            IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
+            IMAGE_TAG: ${{ github.sha }}
+            GHCR_USERNAME: ${{ github.actor }}
+            GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Sử dụng token mặc định của GH Actions
+          run: |
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh "${{ secrets.EC2_USER }}" "${{ secrets.EC2_HOST }}"
 
 
