@@ -2,6 +2,6 @@
   "id": "6b4479b9-6212-477c-aa61-f92a3da244d0",
   "title": "Task ",
   "tag": "note",
-  "content": "14/01/2026 :<div>Deploy express service to lambda + api gateway =&gt; success</div><div>Learn aws cert</div><div>15/01/2026:</div><div>Learn cert</div><div>Learning aws cert</div><div>Remake serverless.yml file to apply sqs queue to the flow =&gt; api gateway =&gt; sqs =&gt; lambda =&gt; done</div><div>Learning Levelup aka </div><div><br></div><div>19/01/2026</div><div>Learn cert </div><div>Software Process Development for Developer =&gt; complete</div>",
-  "updatedAt": "2026-01-19T08:42:04.526Z"
+  "content": "14/01/2026 :<div>Deploy express service to lambda + api gateway =&gt; success</div><div>Learn aws cert</div><div>15/01/2026:</div><div>Learn cert</div><div>Learning aws cert</div><div>Remake serverless.yml file to apply sqs queue to the flow =&gt; api gateway =&gt; sqs =&gt; lambda =&gt; done</div><div>Learning Levelup aka </div><div><br></div><div>19/01/2026 + 20</div><div>Learn cert </div><div>Software Process Development for Developer =&gt; complete</div><div><br></div><div><br></div><div>21 - 23 </div><div>Learn deploy cicd monorepo using docker with nestjs framework + github action for cicd.</div><div>Hosting domain in ec2</div><div><br></div><div>26</div><div>Fix bug deploy</div>",
+  "updatedAt": "2026-01-26T02:33:05.656Z"
 }
