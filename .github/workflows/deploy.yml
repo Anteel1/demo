@@ -106,12 +106,30 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # (Tuỳ chọn) Copy file compose và deploy script lên EC2
+      
+      # (Khuyên dùng) Chuẩn bị thư mục từ xa trước
+      - name: Prepare remote directory
+        run: |
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "\
+            sudo mkdir -p /opt/monorepo && \
+            sudo chown -R \$(whoami):\$(whoami) /opt/monorepo \
+          "
+       
+      # Upload compose & scripts bằng scp (tránh sudo rsync)
       - name: Upload compose & scripts to EC2
         run: |
-          rsync -avz --delete --rsync-path="sudo rsync" monorepo/compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
-          rsync -avz --rsync-path="sudo rsync" scripts/deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/monorepo/deploy.sh
-          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "sudo chown -R $USER:$USER /opt/monorepo && chmod +x /opt/monorepo/deploy.sh"
+          # ✅ Nếu file của bạn là compose.yaml, đổi tên ở dòng dưới cho đúng
+          scp monorepo/compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/compose.yml
+          scp scripts/deploy.sh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/deploy.sh
+
+          # Di chuyển vào /opt/monorepo và set quyền/chmod
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "\
+            sudo mv /tmp/compose.yml /opt/monorepo/compose.yml && \
+            sudo mv /tmp/deploy.sh /opt/monorepo/deploy.sh && \
+            sudo chown \$(whoami):\$(whoami) /opt/monorepo/compose.yml /opt/monorepo/deploy.sh && \
+            chmod +x /opt/monorepo/deploy.sh \
+          "
+        
 
       # Viết .env trên EC2 để deploy script dùng
       - name: Write remote .env
