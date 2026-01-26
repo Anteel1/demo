@@ -100,7 +100,7 @@ jobs:
       
       
       - name: Deploy (SSH to EC2)
-              env:
+        env:
                 EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
                 REGISTRY: ghcr.io
                 IMAGE_PREFIX: ${{ github.repository_owner }}/${{ github.event.repository.name }}
