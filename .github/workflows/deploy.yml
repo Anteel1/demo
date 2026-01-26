@@ -81,7 +81,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo mkdir -p /opt/monorepo && sudo chown ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /opt/monorepo"
           rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-            monorepo/app/compose.yml \
+            monorepo/apps/compose.yml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
 
       - name: Execute Deploy Script
