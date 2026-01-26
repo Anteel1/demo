@@ -1,4 +1,3 @@
-
 name: Build & Deploy 3 services to EC2 (GHCR)
 
 on:
@@ -7,20 +6,12 @@ on:
   workflow_dispatch:
 
 env:
-  # ---- Registry & Naming ----
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/${{ github.event.repository.name }}
-  # Ví dụ full path image sẽ là:
-  # ghcr.io/<owner>/<repo>-api-gateway:<tag>
-  # ghcr.io/<owner>/<repo>-note-module:<tag>
-  # ghcr.io/<owner>/<repo>-resource-module:<tag>
-
-  # ---- Tag ----
-  IMAGE_TAG: ${{ github.sha }} # hoặc "latest"
+  IMAGE_TAG: ${{ github.sha }}
 
 permissions:
   contents: read
-  packages: write     # cần để PUSH image lên GHCR bằng GITHUB_TOKEN
+  packages: write
 
 jobs:
   build-and-push:
@@ -29,101 +20,72 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      
       - name: Normalize owner/repo to lowercase
         run: |
           OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           echo "IMAGE_PREFIX=${OWNER_LOWER}/${REPO_LOWER}" >> $GITHUB_ENV
 
-
-      - name: Docker login to GHCR (for push)
+      - name: Docker login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       # ===== Build & push: api-gateway =====
-      - name: Build api-gateway
+      - name: Build and Push api-gateway
         run: |
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api-gateway:${{ env.IMAGE_TAG }}"
-          echo "Building $IMAGE"
-          docker build \
-            -f monorepo/apps/api-gateway/Dockerfile \
-            -t "$IMAGE" \
-            .
-      - name: Push api-gateway
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api-gateway:${{ env.IMAGE_TAG }}"
+          docker build -f monorepo/apps/api-gateway/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
 
       # ===== Build & push: note-module =====
-      - name: Build note-module
+      - name: Build and Push note-module
         run: |
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-note-module:${{ env.IMAGE_TAG }}"
-          echo "Building $IMAGE"
-          docker build \
-            -f monorepo/apps/note-module/Dockerfile \
-            -t "$IMAGE" \
-            .
-      - name: Push note-module
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-note-module:${{ env.IMAGE_TAG }}"
+          docker build -f monorepo/apps/note-module/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
 
       # ===== Build & push: resource-module =====
-      - name: Build resource-module
+      - name: Build and Push resource-module
         run: |
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
-          echo "Building $IMAGE"
-          docker build \
-            -f monorepo/apps/resource-module/Dockerfile \
-            -t "$IMAGE" \
-            .
-      - name: Push resource-module
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
+          docker build -f monorepo/apps/resource-module/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
 
-    deploy:
-      needs: build-and-push
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Normalize Image Prefix (Quan trọng)
-          run: |
-            OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            REPO_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-            echo "IMAGE_PREFIX=${OWNER_LOWER}/${REPO_LOWER}" >> $GITHUB_ENV
+      - name: Normalize Image Prefix
+        run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_LOWER=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_PREFIX=${OWNER_LOWER}/${REPO_LOWER}" >> $GITHUB_ENV
 
-        - name: Prepare SSH
-          run: |
-            mkdir -p ~/.ssh
-            echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-            ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
-        - name: Upload files to EC2
-          run: |
-            # Đảm bảo thư mục đích tồn tại và có quyền ghi
-            ssh -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo mkdir -p /opt/monorepo && sudo chown ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /opt/monorepo"
-            
-            # Copy docker-compose
-            rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-              monorepo/compose.yml \
-              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
+      - name: Upload files to EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo mkdir -p /opt/monorepo && sudo chown ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /opt/monorepo"
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+            monorepo/compose.yml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/monorepo/compose.yml
 
-        - name: Execute Deploy Script
-          env:
-            # Truyền các biến này để script deploy.sh có thể đọc được
-            EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
-            REGISTRY: ghcr.io
-            IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
-            IMAGE_TAG: ${{ github.sha }}
-            GHCR_USERNAME: ${{ github.actor }}
-            GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Sử dụng token mặc định của GH Actions
-          run: |
-            chmod +x ./scripts/deploy.sh
-            ./scripts/deploy.sh "${{ secrets.EC2_USER }}" "${{ secrets.EC2_HOST }}"
-
-
+      - name: Execute Deploy Script
+        env:
+          EC2_SSH_KEY_PATH: ~/.ssh/deploy_key
+          REGISTRY: ghcr.io
+          IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x ./scripts/deploy.sh
+          ./scripts/deploy.sh "${{ secrets.EC2_USER }}" "${{ secrets.EC2_HOST }}"
