@@ -1252,7 +1252,7 @@
     </div>
 
     <script>
-        const AI_API_URL = 'http://localhost:3000/ask'; // đổi theo backend của bạn
+        const AI_API_URL = 'http://13.250.1.10/ask' || 'http://localhost:3000/ask'; // đổi theo backend của bạn
 
         const aiHeaderBtn = document.getElementById('aiHeaderBtn');
         const aiDrawer = document.getElementById('aiDrawer');
@@ -1263,7 +1263,7 @@
         const aiMessages = document.getElementById('aiMessages');
         const aiPromptInput = document.getElementById('aiPrompt');
         const aiSendBtn = document.getElementById('aiSendBtn');
-        const API_URL = 'http://localhost:3000/note';
+        const API_URL = 'http://13.250.1.10/note';
         const notesState = [];
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
@@ -1626,7 +1626,7 @@
             formData.append('file', file); // 'file' phải khớp với đặt tên trong NestJS FileInterceptor
 
             try {
-                const response = await fetch('http://localhost:3000/upload', {
+                const response = await fetch('http://13.250.1.10/upload', {
                     method: 'POST',
                     body: formData
                 });
