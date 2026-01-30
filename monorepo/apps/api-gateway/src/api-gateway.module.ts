@@ -29,6 +29,16 @@ import path, { join } from 'path';
           host: 'resource-module',
           port: 3002,
         },
+      }]),
+      ClientsModule.register([
+      {
+        name: 'AI_SERVICE', // Tên Token để Inject vào Controller
+        transport: Transport.GRPC,
+        options: {
+          url: 'ai-module:3004', // Địa chỉ của AI Microservice
+          package: 'chat',        // Phải khớp với 'package chat' trong file .proto
+          protoPath: join(__dirname, './chat.proto'),
+        },
       }])
   ],
   controllers: [ApiGatewayController],

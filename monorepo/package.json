@@ -21,7 +21,10 @@
   },
   "dependencies": {
     "@codegenie/serverless-express": "^4.17.1",
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "github:nestjs/config",
     "@nestjs/core": "^11.0.1",
     "@nestjs/microservices": "^11.1.10",
     "@nestjs/platform-express": "^11.0.1",
@@ -29,6 +32,7 @@
     "@nestjs/serve-static": "^5.0.4",
     "@nestjs/websockets": "^11.1.10",
     "aws-lambda": "^1.0.7",
+    "ollama": "^0.6.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

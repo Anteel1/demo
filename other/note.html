@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -124,7 +123,8 @@
             padding: 0;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             width: 100%;
         }
@@ -522,6 +522,7 @@
                 opacity: 0;
                 transform: translate(-50%, -8px) scale(0.95);
             }
+
             to {
                 opacity: 1;
                 transform: translate(-50%, 0) scale(1);
@@ -742,9 +743,12 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.5;
             }
@@ -796,11 +800,11 @@
             box-shadow: var(--shadow-sm);
         }
 
-        input:checked + .slider .ball {
+        input:checked+.slider .ball {
             transform: translateX(28px);
         }
 
-        input:checked + .slider {
+        input:checked+.slider {
             background-color: var(--accent);
             border-color: var(--accent);
         }
@@ -921,6 +925,186 @@
         .hidden {
             display: none !important;
         }
+
+        /* ============ AI DRAWER (HEADER TRIGGER) ============ */
+        .ai-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 20000;
+        }
+
+        .ai-drawer {
+            position: fixed;
+            top: 64px;
+            /* đúng bằng header height của bạn */
+            right: 16px;
+            width: min(420px, calc(100vw - 32px));
+            height: calc(100vh - 64px - 16px);
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 20001;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            transform: translateX(24px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .ai-drawer.open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ai-drawer-header {
+            padding: 14px 14px 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .ai-drawer-title {
+            font-weight: 900;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        .ai-drawer-subtitle {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .ai-drawer-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ai-mini-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-main);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-mini-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: var(--bg-main);
+        }
+
+        .ai-msg {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .ai-role {
+            width: 44px;
+            flex-shrink: 0;
+            text-align: center;
+            font-weight: 900;
+            font-size: 12px;
+            padding: 6px 0;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .ai-bubble {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-main);
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .ai-msg.user .ai-role {
+            background: var(--tag-bg);
+            color: var(--tag-text);
+        }
+
+        .ai-msg.user .ai-bubble {
+            background: rgba(99, 102, 241, 0.10);
+            border-color: rgba(99, 102, 241, 0.30);
+        }
+
+        .ai-inputbar {
+            display: flex;
+            gap: 10px;
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-main);
+            color: var(--text-main);
+            outline: none;
+            font-size: 14px;
+        }
+
+        .ai-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+        }
+
+        .ai-send-btn {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .ai-send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ai-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -933,6 +1117,9 @@
                 <div class="logo-icon">✎</div>
                 <span>Notes</span>
             </div>
+            <button class="icon-button" id="aiHeaderBtn" title="Chat với AI">
+                🤖
+            </button>
         </div>
 
         <div class="header-right">
@@ -972,12 +1159,7 @@
         <main class="main-content">
             <div class="editor-container">
                 <div class="editor-header">
-                    <input 
-                        type="text" 
-                        id="activeTitle" 
-                        class="title-input" 
-                        placeholder="Tiêu đề ghi chú..."
-                    >
+                    <input type="text" id="activeTitle" class="title-input" placeholder="Tiêu đề ghi chú...">
                     <div id="tag-list" class="tag-list">
                         <!-- Tags will be displayed here -->
                     </div>
@@ -1018,22 +1200,10 @@
                     <div class="format-separator"></div>
 
                     <!-- Text Color -->
-                    <input 
-                        type="color" 
-                        class="format-color-input" 
-                        id="textColorPicker" 
-                        value="#1e293b"
-                        title="Màu chữ"
-                    >
+                    <input type="color" class="format-color-input" id="textColorPicker" value="#1e293b" title="Màu chữ">
 
                     <!-- Background Color -->
-                    <input 
-                        type="color" 
-                        class="format-color-input" 
-                        id="bgColorPicker" 
-                        value="#ffffff"
-                        title="Màu nền"
-                    >
+                    <input type="color" class="format-color-input" id="bgColorPicker" value="#ffffff" title="Màu nền">
 
                     <!-- Separator -->
                     <div class="format-separator"></div>
@@ -1044,12 +1214,9 @@
                     </button>
                 </div>
 
-                <div 
-                    id="activeContent" 
-                    class="editor-body" 
-                    contenteditable="true"
-                    data-placeholder="Bắt đầu gõ để viết ghi chú của bạn...&#10;Hỗ trợ định dạng văn bản.&#10;Mọi thay đổi sẽ tự động được lưu."
-                ></div>
+                <div id="activeContent" class="editor-body" contenteditable="true"
+                    data-placeholder="Bắt đầu gõ để viết ghi chú của bạn...&#10;Hỗ trợ định dạng văn bản.&#10;Mọi thay đổi sẽ tự động được lưu.">
+                </div>
             </div>
         </main>
     </div>
@@ -1059,8 +1226,43 @@
         <div class="status-dot"></div>
         <span id="status-text">Đang lưu...</span>
     </div>
+    <!-- AI Drawer (overlay) -->
+    <div id="aiOverlay" class="ai-overlay hidden" aria-hidden="true"></div>
+
+    <div id="aiDrawer" class="ai-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="aiDrawerTitle">
+        <div class="ai-drawer-header">
+            <div>
+                <div id="aiDrawerTitle" class="ai-drawer-title">AI Chat</div>
+                <div class="ai-drawer-subtitle">Hỏi AI dựa trên ghi chú đang mở</div>
+            </div>
+
+            <div class="ai-drawer-actions">
+                <button id="aiClearBtn" class="ai-mini-btn" title="Xoá lịch sử chat">🧹</button>
+                <button id="aiCloseBtn" class="ai-mini-btn" title="Đóng">✕</button>
+            </div>
+        </div>
+
+        <div id="aiMessages" class="ai-messages"></div>
+
+        <div class="ai-inputbar">
+            <input id="aiPrompt" class="ai-input" type="text" placeholder="Nhập câu hỏi... (Enter để gửi)"
+                autocomplete="off" />
+            <button id="aiSendBtn" class="ai-send-btn">Gửi</button>
+        </div>
+    </div>
 
     <script>
+        const AI_API_URL = 'http://localhost:3000/ask'; // đổi theo backend của bạn
+
+        const aiHeaderBtn = document.getElementById('aiHeaderBtn');
+        const aiDrawer = document.getElementById('aiDrawer');
+        const aiOverlay = document.getElementById('aiOverlay');
+        const aiCloseBtn = document.getElementById('aiCloseBtn');
+        const aiClearBtn = document.getElementById('aiClearBtn');
+
+        const aiMessages = document.getElementById('aiMessages');
+        const aiPromptInput = document.getElementById('aiPrompt');
+        const aiSendBtn = document.getElementById('aiSendBtn');
         const API_URL = 'http://localhost:3000/note';
         const notesState = [];
         const statusIndicator = document.getElementById('status-indicator');
@@ -1186,14 +1388,14 @@
             fontSizeDropdown.addEventListener('change', (e) => {
                 const size = e.target.value;
                 document.execCommand('fontSize', false, '7');
-                
+
                 // Get the font element and set its size
                 const fontElements = activeContentDiv.querySelectorAll('font[size="7"]');
                 fontElements.forEach(el => {
                     el.style.fontSize = size + 'px';
                     el.removeAttribute('size');
                 });
-                
+
                 activeContentDiv.focus();
                 updateToolbarState();
             });
@@ -1285,7 +1487,7 @@
         function sanitizeHTML(html) {
             const allowedTags = ['p', 'strong', 'em', 'u', 'span', 'br', 'img'];
             const allowedAttrs = ['style', 'src', 'alt'];
-            
+
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
 
@@ -1293,10 +1495,10 @@
                 if (node.nodeType === 3) { // Text node
                     return node;
                 }
-                
+
                 if (node.nodeType === 1) { // Element node
                     const tagName = node.tagName.toLowerCase();
-                    
+
                     if (!allowedTags.includes(tagName)) {
                         // Replace with text content
                         const textNode = document.createTextNode(node.textContent);
@@ -1319,7 +1521,7 @@
                         }
                     });
                 }
-                
+
                 return node;
             }
 
@@ -1355,7 +1557,7 @@
             // Handle paste event - support both text and images
             activeContentDiv.addEventListener('paste', (e) => {
                 e.preventDefault();
-                
+
                 const items = e.clipboardData.items;
                 let hasImage = false;
 
@@ -1369,12 +1571,12 @@
                         const reader = new FileReader();
                         reader.onload = (event) => {
                             const base64Image = event.target.result;
-                            
+
                             // Create and insert image element
                             const img = document.createElement('img');
                             img.src = base64Image;
                             img.alt = 'Pasted image';
-                            uploadImage(file,img)
+                            uploadImage(file, img)
                             // Insert image at cursor position
                             const selection = window.getSelection();
                             if (selection.rangeCount > 0) {
@@ -1387,7 +1589,7 @@
                             } else {
                                 activeContentDiv.appendChild(img);
                             }
-                            
+
                             // Add line break after image
                             const br = document.createElement('br');
                             const selection2 = window.getSelection();
@@ -1399,15 +1601,15 @@
                                 selection2.removeAllRanges();
                                 selection2.addRange(range);
                             }
-                            
+
                             // Show success message
                             showStatus('Hình ảnh được dán thành công', 'success', 2000);
                             triggerAutoSave();
                         };
-                        
+
                         reader.readAsDataURL(file);
 
-                        
+
                     }
                 }
 
@@ -1418,8 +1620,8 @@
                 }
             });
         }
-        
-        async function uploadImage(file,imgElement){
+
+        async function uploadImage(file, imgElement) {
             const formData = new FormData();
             formData.append('file', file); // 'file' phải khớp với đặt tên trong NestJS FileInterceptor
 
@@ -1431,11 +1633,11 @@
 
                 if (response.ok) {
                     const { data } = await response.json();
-                    console.log('url response',data)
+                    console.log('url response', data)
                     // 5. Thay thế Blob URL tạm thời bằng URL thật từ Server trả về
-                    imgElement.src = data.url; 
+                    imgElement.src = data.url;
                     delete imgElement.dataset.pending; // Xóa đánh dấu chờ
-                    
+
                     showStatus('Đã lưu ảnh lên server', 'success', 2000);
                     triggerAutoSave();
                 } else {
@@ -1480,13 +1682,13 @@
         function showStatus(message, type = 'info', duration = 3000) {
             statusText.innerText = message;
             statusIndicator.classList.remove('error', 'success');
-            
+
             if (type === 'error') {
                 statusIndicator.classList.add('error');
             } else if (type === 'success') {
                 statusIndicator.classList.add('success');
             }
-            
+
             statusIndicator.classList.add('visible');
 
             if (duration > 0) {
@@ -1498,8 +1700,8 @@
 
         async function fetchNotes() {
             try {
-                const response = await fetch(API_URL,{
-                    method : "POST",
+                const response = await fetch(API_URL, {
+                    method: "POST",
                 });
                 const { data } = await response.json();
                 renderNoteList(data);
@@ -1512,7 +1714,7 @@
         async function fetchNoteByID(id, div) {
             try {
                 const response = await fetch(`${API_URL}?id=${id}`, {
-                    method : "POST"
+                    method: "POST"
                 });
                 const { data } = await response.json();
                 displayNoteDetail(data, div);
@@ -1529,21 +1731,21 @@
         function renderNoteList(notes) {
             removeNoteState();
             noteList.innerHTML = '';
-            
-            notes.sort((a, b) => 
+
+            notes.sort((a, b) =>
                 b.title.localeCompare(a.title, undefined, { numeric: true, sensitivity: 'base' })
             ).forEach((note, index) => {
                 const div = document.createElement('div');
                 div.className = `note-item ${index === 0 ? 'active' : ''}`;
                 div.id = note.id;
-                
+
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'note-item-content';
-                
+
                 const titleEl = document.createElement('div');
                 titleEl.className = 'note-item-title';
                 titleEl.textContent = note.title || 'Không có tiêu đề';
-                
+
                 const previewEl = document.createElement('div');
                 previewEl.className = 'note-item-preview';
                 // let contentText = '';
@@ -1560,11 +1762,11 @@
                 //     }
                 // }
                 // previewEl.textContent = contentText.substring(0, 60) || 'Không có nội dung';
-                
+
                 contentDiv.appendChild(titleEl);
                 contentDiv.appendChild(previewEl);
                 div.appendChild(contentDiv);
-                
+
                 div.addEventListener('click', () => {
                     fetchNoteByID(note.id, div);
                 });
@@ -1584,7 +1786,7 @@
 
             document.getElementById('activeTitle').value = note.title || '';
             renewTags(note);
-            
+
             // Load content - support both HTML and text format
             let content = '';
             if (note.content) {
@@ -1602,7 +1804,7 @@
                     content = note.content;
                 }
             }
-            
+
             activeContentDiv.innerHTML = content;
             updatePlaceholder();
             updateToolbarState();
@@ -1617,9 +1819,9 @@
             const newNote = {
                 tag: "note",
                 title: "Ghi chú mới" + (notesState.length + 1),
-                content: { 
-                    content: '', 
-                    format: "html" 
+                content: {
+                    content: '',
+                    format: "html"
                 },
             };
             await savingNoteToDB(newNote);
@@ -1634,9 +1836,9 @@
             const title = document.getElementById('activeTitle').value;
             // Get HTML content from contenteditable div
             const htmlContent = activeContentDiv.innerHTML;
-            const content ={ 
-                content: htmlContent, 
-                format: "html" 
+            const content = {
+                content: htmlContent,
+                format: "html"
             };
 
             if (!id) return;
@@ -1652,9 +1854,8 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body : JSON.stringify(content)
+                    body: JSON.stringify(content)
                 });
-                console.log('checking ',response)
                 if (response.ok) {
                     showStatus('Đã lưu thành công ✓', 'success', 2000);
                     const activeItem = document.querySelector('.note-item.active');
@@ -1718,6 +1919,153 @@
                 }
             });
         }
+        function openAIDrawer() {
+            aiOverlay.classList.remove('hidden');
+            aiDrawer.classList.remove('hidden');
+            // trigger transition
+            requestAnimationFrame(() => aiDrawer.classList.add('open'));
+            aiOverlay.setAttribute('aria-hidden', 'false');
+            setTimeout(() => aiPromptInput?.focus(), 50);
+        }
+
+        function closeAIDrawer() {
+            aiDrawer.classList.remove('open');
+            aiOverlay.setAttribute('aria-hidden', 'true');
+            setTimeout(() => {
+                aiDrawer.classList.add('hidden');
+                aiOverlay.classList.add('hidden');
+            }, 180);
+        }
+
+        aiHeaderBtn?.addEventListener('click', () => {
+            const isHidden = aiDrawer.classList.contains('hidden');
+            isHidden ? openAIDrawer() : closeAIDrawer();
+        });
+
+        aiCloseBtn?.addEventListener('click', closeAIDrawer);
+        aiOverlay?.addEventListener('click', closeAIDrawer);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !aiDrawer.classList.contains('hidden')) {
+                closeAIDrawer();
+            }
+        });
+
+        function appendAIMessage(role, text) {
+            if (!aiMessages) return;
+
+            const row = document.createElement('div');
+            row.className = `ai-msg ${role}`;
+
+            const roleEl = document.createElement('div');
+            roleEl.className = 'ai-role';
+            roleEl.textContent = role === 'user' ? 'YOU' : 'AI';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'ai-bubble';
+            bubble.textContent = text;
+
+            row.appendChild(roleEl);
+            row.appendChild(bubble);
+            aiMessages.appendChild(row);
+
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+
+        function getActiveNoteContext() {
+            const id = document.querySelector('.note-item.active')?.id || '';
+            const title = document.getElementById('activeTitle')?.value || '';
+            const htmlContent = activeContentDiv?.innerHTML || '';
+            const textContent = activeContentDiv?.innerText || '';
+            return { id, title, htmlContent, textContent };
+        }
+
+        async function sendPromptToAI(prompt) {
+    const ctx = getActiveNoteContext();
+
+    aiSendBtn.disabled = true;
+    showStatus('AI đang trả lời...', 'info', 0);
+    appendAIMessage('user', prompt);
+
+    // 1. Chuẩn bị dữ liệu để gửi qua Query Params
+    // Lưu ý: Nếu dữ liệu note quá lớn, bạn nên tối giản hoặc cắt bớt để tránh vượt quá giới hạn URL
+    const queryParams = new URLSearchParams({
+        prompt: prompt,
+    });
+
+    try {
+        // 2. Khởi tạo EventSource (GET request)
+        const eventSource = new EventSource(`${AI_API_URL}?${queryParams.toString()}`);
+
+        // Tạo một bubble tin nhắn trống cho AI để chuẩn bị nhận token
+        const aiMsgRow = document.createElement('div');
+        aiMsgRow.className = `ai-msg assistant`;
+        aiMsgRow.innerHTML = `<div class="ai-role">AI</div><div class="ai-bubble"></div>`;
+        aiMessages.appendChild(aiMsgRow);
+        const bubble = aiMsgRow.querySelector('.ai-bubble');
+
+        // 3. Lắng nghe từng token đổ về từ NestJS @Sse
+        eventSource.onmessage = (event) => {
+            if (event.data === '[DONE]') {
+                eventSource.close();
+                aiSendBtn.disabled = false;
+                showStatus('AI đã trả lời ✓', 'success', 1500);
+                return;
+            }
+            const dataJSON = JSON.parse(event.data)
+            const result = dataJSON.data
+            // Render text theo kiểu cộng dồn
+            if(result != "") {
+            bubble.textContent += result;
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+            }
+            
+        };
+
+        // 4. Xử lý lỗi kết nối
+        eventSource.onerror = (e) => {
+            console.error("SSE Error:", e);
+            eventSource.close();
+            aiSendBtn.disabled = false;
+            
+            // Chỉ hiển thị lỗi nếu chưa nhận được chữ nào
+            if (bubble.textContent.length === 0) {
+                bubble.textContent = 'Xin lỗi, không gọi được AI API lúc này.';
+                showStatus('Không gọi được AI API', 'error', 3000);
+            }
+        };
+
+    } catch (e) {
+        console.error(e);
+        aiSendBtn.disabled = false;
+    }
+}
+        function wireAIChat() {
+            if (!aiPromptInput || !aiSendBtn) return;
+
+            aiSendBtn.addEventListener('click', async () => {
+                const prompt = aiPromptInput.value.trim();
+                if (!prompt) return;
+                aiPromptInput.value = '';
+                await sendPromptToAI(prompt);
+            });
+
+            aiPromptInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const prompt = aiPromptInput.value.trim();
+                    if (!prompt) return;
+                    aiPromptInput.value = '';
+                    await sendPromptToAI(prompt);
+                }
+            });
+
+            aiClearBtn?.addEventListener('click', () => {
+                if (aiMessages) aiMessages.innerHTML = '';
+            });
+        }
+
+        wireAIChat();
     </script>
 
 </body>

@@ -9,12 +9,15 @@ services:
     depends_on:
       - note-module
       - resource-module
+      - ai-module
     environment:
       NODE_ENV: ${ENVIRONMENT}
       NOTE_HOST: note-module
       NOTE_PORT: "3001"
       RESOURCE_HOST: resource-module
       RESOURCE_PORT: "3002"
+      AI_HOST: ai-module
+      AI_PORT: "3004"
     ports:
       - "3000:3000"
 
@@ -35,3 +38,12 @@ services:
       NODE_ENV: ${ENVIRONMENT}
     expose:
       - "3002"
+  ai-module:
+    image: ${REGISTRY}/${IMAGE_PREFIX}-ai-module:${IMAGE_TAG}
+    container_name: ai-module-container 
+    restart: always
+    environment:
+      NODE_ENV: ${ENVIRONMENT}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
+    expose:
+      - "3004"

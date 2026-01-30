@@ -16,7 +16,8 @@
       "entryFile": "main",
       "sourceRoot": "apps/api-gateway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
+        "assets": ["**/*.proto"]
       }
     },
     "monorepo": {
@@ -44,6 +45,16 @@
       "sourceRoot": "apps/resource-module/src",
       "compilerOptions": {
         "tsConfigPath": "apps/resource-module/tsconfig.app.json"
+      }
+    },
+    "ai-module": {
+      "type": "application",
+      "root": "apps/ai-module",
+      "entryFile": "main",
+      "sourceRoot": "apps/ai-module/src",
+      "compilerOptions": {
+        "assets": ["**/*.proto"],
+        "tsConfigPath": "apps/ai-module/tsconfig.app.json"
       }
     }
   }
