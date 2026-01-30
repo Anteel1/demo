@@ -40,7 +40,7 @@ services:
       - "3002"
   ai-module:
     image: ${REGISTRY}/${IMAGE_PREFIX}-ai-module:${IMAGE_TAG}
-    container_name: ai-module-container 
+    container_name: ai-module
     restart: always
     environment:
       NODE_ENV: ${ENVIRONMENT}
