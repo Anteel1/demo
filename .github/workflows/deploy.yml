@@ -50,6 +50,12 @@ jobs:
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-resource-module:${{ env.IMAGE_TAG }}"
           docker build -f monorepo/apps/resource-module/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
+      # ===== Build & push: ai-module =====
+      - name: Build and Push ai-module
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-ai-module:${{ env.IMAGE_TAG }}"
+          docker build -f monorepo/apps/ai-module/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
 
   deploy:
     needs: build-and-push
