@@ -16,6 +16,7 @@ ssh -i "$EC2_SSH_KEY_PATH" "$USER@$HOST" << EOF
     export IMAGE_TAG=$IMAGE_TAG
     export IMAGE_PREFIX=$IMAGE_PREFIX
     export REGISTRY=$REGISTRY
+    export OLLAMA_API_KEY=$OLLAMA_API_KEY
 
     # Pull image mới nhất
     docker compose pull
